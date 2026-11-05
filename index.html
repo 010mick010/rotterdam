@@ -81,8 +81,14 @@ h1 {
   transition: opacity var(--fade) ease;
 }
 .layer.on { opacity: 1; }
-.layer iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
-.tile:first-child .layer iframe { inset: -2%; width: 104%; height: 104%; } /* geen zwarte randjes op het grote scherm */
+/* De speler rendert groot en wordt passend verkleind: YouTube kiest zijn kwaliteit op basis van de spelergrootte. */
+.layer iframe {
+  position: absolute; left: 50%; top: 50%;
+  width: var(--rw, 100%); height: var(--rh, 100%);
+  max-width: none;
+  transform: translate(-50%, -50%) scale(var(--s, 1));
+  border: 0; pointer-events: none;
+}
 .waiting {
   position: absolute; inset: 0;
   display: grid; place-items: center;
@@ -330,6 +336,18 @@ function buildTile(i) {
   });
   wall.appendChild(el);
   tiles.push(t);
+  new ResizeObserver(() => sizePlayers(t)).observe(el);
+}
+
+// Renderbreedte per scherm in pixels: het grote scherm 1080p, de kleine 720p (telefoon: 720p en 360p).
+function sizePlayers(t) {
+  const rw = t.i === 0 ? (narrow.matches ? 1280 : 1920) : (narrow.matches ? 640 : 1280);
+  const rh = rw * 9 / 16;
+  const box = t.el.getBoundingClientRect();
+  if (!box.width) return;
+  t.el.style.setProperty('--rw', rw + 'px');
+  t.el.style.setProperty('--rh', rh + 'px');
+  t.el.style.setProperty('--s', Math.max(box.width / rw, box.height / rh));
 }
 
 function label(t, cam) {
