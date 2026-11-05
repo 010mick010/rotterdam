@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hoe mooi Rotterdam is</title>
+<meta name="description" content="Rotterdam live: tien YouTube-webcams die willekeurig wisselen, van de Erasmusbrug tot de Nieuwe Waterweg.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700&family=JetBrains+Mono:wght@400;500&family=Saira+Stencil+One&display=swap">
+<style>
+/* Layout: de haven bij schemering. Eerst de muur met live beelden, daarna het verhaal in jaartallen, als vracht gemerkt met stencilletters. */
+:root {
+  color-scheme: dark;
+  --maas: #0d2733;        /* rivier bij schemering, achtergrond */
+  --maas-deep: #081c25;   /* achter de video's */
+  --steel: #1d4152;       /* lijnen en vlakken */
+  --bridge: #9fd0ea;      /* lichtblauw van de Erasmusbrug */
+  --container: #f26b2e;   /* containeroranje, alleen voor live en actie */
+  --paper: #eef4f5;       /* tekst */
+  --mist: #a3bcc6;        /* secundaire tekst */
+  --display: "Saira Stencil One", Impact, "Arial Narrow", sans-serif;
+  --body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", Consolas, monospace;
+  --fade: 1.1s;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { background: var(--maas); }
+body {
+  margin: 0;
+  background: var(--maas);
+  color: var(--paper);
+  font: 400 17px/1.55 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1760px; margin: 0 auto; }
+a { color: var(--bridge); }
+:focus-visible { outline: 2px solid var(--container); outline-offset: 2px; }
+
+/* Kop */
+.manifest {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 24px;
+  padding-block: 18px 0;
+  font: 400 12.5px/1.5 var(--mono);
+  letter-spacing: .04em;
+  color: var(--mist);
+  font-variant-numeric: tabular-nums;
+}
+h1 {
+  margin: 10px 0 18px;
+  font: 400 clamp(46px, 11.1vw, 172px)/.95 var(--display);
+  letter-spacing: -.005em;
+  color: var(--bridge);
+  text-wrap: balance;
+}
+
+/* Muur met webcams */
+.wall {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  grid-template-rows: repeat(3, 1fr);
+  gap: 6px;
+}
+.tile {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  max-width: 100%;
+  width: 100%;
+  background: var(--maas-deep);
+  cursor: pointer;
+  min-width: 0;
+}
+.tile:first-child { grid-row: 1 / span 3; cursor: default; aspect-ratio: auto; min-height: 100%; }
+.tile[hidden] { display: none; }
+.layer {
+  position: absolute; inset: 0;
+  opacity: 0;
+  transition: opacity var(--fade) ease;
+}
+.layer.on { opacity: 1; }
+.layer iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
+.tile:first-child .layer iframe { inset: -2%; width: 104%; height: 104%; } /* geen zwarte randjes op het grote scherm */
+.waiting {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  font: 400 12px var(--mono);
+  color: var(--mist);
+  text-align: center;
+  padding: 8px;
+}
+.tag {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 10px;
+  padding: 34px 12px 9px;
+  background: linear-gradient(to top, rgba(8, 28, 37, .9), rgba(8, 28, 37, 0));
+  pointer-events: none;
+}
+.tag > div { min-width: 0; }
+.tag .code { display: block; font: 400 11px var(--mono); letter-spacing: .08em; color: var(--bridge); }
+.tag .name { display: block; font-weight: 700; font-size: 15px; line-height: 1.2; }
+.tile:first-child .tag { padding: 60px 18px 14px; }
+.tile:first-child .tag .code { font-size: 13px; }
+.tile:first-child .tag .name { font-size: clamp(20px, 2.6vw, 36px); }
+.tag a {
+  pointer-events: auto;
+  flex: none;
+  font: 400 11.5px var(--mono);
+  color: var(--paper);
+  text-underline-offset: 3px;
+  padding: 4px 0;
+}
+.live {
+  position: absolute; top: 10px; left: 10px;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 2px 8px;
+  background: var(--container);
+  color: #1b0d05;
+  font: 500 11px var(--mono);
+  letter-spacing: .1em;
+  pointer-events: none;
+}
+.live::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #1b0d05; animation: pulse 1.6s infinite; }
+@keyframes pulse { 50% { opacity: .25; } }
+
+/* Bediening */
+.deck {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+  padding-block: 12px 0;
+}
+.meter { flex: 1 1 180px; height: 3px; background: var(--steel); min-width: 120px; }
+.meter i { display: block; height: 100%; width: 0; background: var(--container); }
+.status { font: 400 12.5px var(--mono); color: var(--mist); font-variant-numeric: tabular-nums; }
+button.act {
+  font: 500 13.5px var(--body);
+  color: var(--paper);
+  background: transparent;
+  border: 1px solid var(--bridge);
+  padding: 8px 14px;
+  cursor: pointer;
+}
+button.act:hover { background: var(--steel); }
+button.act.primary { background: var(--container); border-color: var(--container); color: #1b0d05; }
+button.act.primary:hover { background: #ff8148; }
+
+/* Tekst */
+.intro {
+  display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px 60px;
+  padding-block: 56px 40px;
+  align-items: end;
+}
+.intro p { margin: 0; max-width: 62ch; }
+.intro .lead { font-size: clamp(21px, 2.3vw, 31px); line-height: 1.32; font-weight: 500; text-wrap: pretty; }
+.intro .side { color: var(--mist); }
+h2 {
+  margin: 0;
+  font: 400 clamp(32px, 5vw, 68px)/1 var(--display);
+  color: var(--bridge);
+  text-wrap: balance;
+}
+.sub { margin: 10px 0 0; color: var(--mist); max-width: 62ch; }
+
+/* Camera-overzicht */
+.cams { padding-block: 16px 30px; }
+.camlist {
+  list-style: none; margin: 24px 0 0; padding: 0;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px;
+  border-top: 1px solid var(--steel);
+}
+.camlist li { border-bottom: 1px solid var(--steel); min-width: 0; }
+.camlist button {
+  all: unset;
+  box-sizing: border-box;
+  display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; gap: 2px 12px;
+  align-items: baseline;
+  width: 100%;
+  padding: 12px 4px;
+  cursor: pointer;
+}
+.camlist button:hover .cname { color: var(--bridge); }
+.camlist button:focus-visible { outline: 2px solid var(--container); outline-offset: -2px; }
+.ccode { font: 400 12px var(--mono); color: var(--mist); }
+.cname { font-weight: 700; }
+.cnote { grid-column: 2 / -1; font-size: 14.5px; line-height: 1.4; color: var(--mist); }
+.cstate { font: 400 11.5px var(--mono); letter-spacing: .04em; color: var(--mist); }
+.cstate.in { color: var(--container); }
+.cstate.off { text-decoration: line-through; }
+
+/* Brug */
+.bridge { display: block; width: 100%; height: auto; margin-top: 30px; }
+.bridge line, .bridge polyline { stroke: var(--bridge); fill: none; }
+
+/* Tijdlijn */
+.history { padding-block: 34px 50px; }
+.years { margin: 28px 0 0; border-top: 1px solid var(--steel); }
+.year {
+  display: grid; grid-template-columns: minmax(84px, 170px) minmax(0, 1fr) minmax(0, 1.5fr);
+  gap: 4px 28px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--steel);
+  align-items: baseline;
+}
+.year dt { display: contents; }
+.year .y { font: 400 clamp(30px, 3.4vw, 48px)/1 var(--display); color: var(--mist); font-variant-numeric: tabular-nums; }
+.year .t { font-weight: 700; font-size: clamp(18px, 1.7vw, 23px); line-height: 1.2; }
+.year dd { margin: 0; max-width: 62ch; }
+.year.scar .y, .year.scar .t { color: var(--container); }
+
+footer {
+  padding-block: 24px 40px;
+  border-top: 1px solid var(--steel);
+  font-size: 14px;
+  color: var(--mist);
+}
+footer p { margin: 0 0 8px; max-width: 80ch; }
+
+@media (max-width: 760px) {
+  .wall { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
+  .tile:first-child { grid-row: auto; grid-column: 1 / -1; aspect-ratio: 16 / 9; min-height: 0; }
+  .intro { grid-template-columns: minmax(0, 1fr); padding-block: 36px 24px; }
+  .camlist { grid-template-columns: minmax(0, 1fr); }
+  .year { grid-template-columns: minmax(0, 1fr); }
+  .tag a { display: none; }
+  .tile:first-child .tag a { display: inline; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --fade: 0s; }
+  .live::before { animation: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="manifest">
+      <span>NLRTM · 51°55′N 4°29′O</span>
+      <span id="clock">Rotterdamse tijd</span>
+    </div>
+    <h1>Hoe mooi Rotterdam is</h1>
+  </header>
+
+  <section aria-label="Live webcams">
+    <div class="wall" id="wall"></div>
+    <div class="deck">
+      <button class="act primary" id="next" type="button">Wissel nu</button>
+      <button class="act" id="pause" type="button" aria-pressed="false">Pauzeer wisselen</button>
+      <div class="meter" aria-hidden="true"><i id="meter"></i></div>
+      <span class="status" id="status" aria-live="off"></span>
+    </div>
+  </section>
+
+  <section class="intro">
+    <p class="lead">Rotterdam is op zijn mooist als het gewoon doorgaat. Schepen varen de Nieuwe Waterweg op, de Erasmusbrug hangt boven de Maas en op het Hofplein fietst iemand te hard.</p>
+    <p class="side">Dit zijn beelden van dit moment. Is het donker in Rotterdam, dan is het hier ook donker, en dan zie je de stad met het licht aan.</p>
+  </section>
+
+  <section class="cams">
+    <h2>Tien plekken, één stad</h2>
+    <p class="sub">Elke paar tellen springt een van de schermen willekeurig naar een andere plek. Kies je er zelf een, dan komt die op het grote scherm.</p>
+    <ul class="camlist" id="camlist"></ul>
+  </section>
+
+  <svg class="bridge" id="bridge" viewBox="0 0 1200 210" role="img" aria-label="Lijntekening van de Erasmusbrug"></svg>
+
+  <section class="history">
+    <h2>Sterker door strijd</h2>
+    <p class="sub">Het stadsmotto sinds 1948. Rotterdam verloor in 1940 zijn hart en koos ervoor om niet terug te bouwen wat er was, maar om steeds iets nieuws te proberen.</p>
+    <dl class="years">
+      <div class="year"><dt><span class="y">1901</span><span class="t">Hotel New York</span></dt><dd>Gebouwd als hoofdkantoor van de Holland-Amerika Lijn. Vanaf deze kade vertrokken honderdduizenden Europeanen naar Amerika.</dd></div>
+      <div class="year"><dt><span class="y">1931</span><span class="t">Van Nelle Fabriek</span></dt><dd>Koffie, thee en tabak achter een wand van glas en staal. Sinds 2014 staat de fabriek op de UNESCO-werelderfgoedlijst.</dd></div>
+      <div class="year scar"><dt><span class="y">1940</span><span class="t">Het bombardement</span></dt><dd>Op 14 mei verwoesten Duitse bommen het centrum. De Laurenskerk blijft als ruïne overeind en wordt later herbouwd.</dd></div>
+      <div class="year"><dt><span class="y">1953</span><span class="t">De Verwoeste Stad</span></dt><dd>Ossip Zadkine maakt een beeld van een mens met een gat op de plek van het hart. Het staat nog steeds aan de Leuvehaven.</dd></div>
+      <div class="year"><dt><span class="y">1960</span><span class="t">Euromast</span></dt><dd>Hugh Maaskant ontwerpt een uitkijktoren voor de Floriade. Met de latere Space Tower is hij 185 meter hoog.</dd></div>
+      <div class="year"><dt><span class="y">1984</span><span class="t">Kubuswoningen</span></dt><dd>Piet Blom kantelt het huis op een zeshoekige paal. Er wonen nog altijd mensen, tussen schuine muren.</dd></div>
+      <div class="year"><dt><span class="y">1996</span><span class="t">Erasmusbrug</span></dt><dd>Ben van Berkel tekent 802 meter brug met een pyloon van 139 meter. Rotterdammers noemen hem de Zwaan.</dd></div>
+      <div class="year"><dt><span class="y">2013</span><span class="t">De Rotterdam</span></dt><dd>Rem Koolhaas stapelt drie torens tot een verticale stad van 149 meter aan de Wilhelminakade.</dd></div>
+      <div class="year"><dt><span class="y">2014</span><span class="t">Markthal</span></dt><dd>MVRDV legt een boog van woningen over een markt. Op het plafond staat de Hoorn des Overvloeds van Arno Coenen.</dd></div>
+      <div class="year"><dt><span class="y">2021</span><span class="t">Depot Boijmans Van Beuningen</span></dt><dd>Een spiegelende kom in het Museumpark, met de collectie in het zicht en bomen op het dak.</dd></div>
+    </dl>
+  </section>
+
+  <footer>
+    <p>Beelden via YouTube, van de kanalen Rotterdam Make It Happen, Port of Rotterdam, Gemeente Rotterdam, RTM XL en Strandweer.nu. Alle tien de streams waren live op 5 november 2026.</p>
+    <p>Valt een stream uit, dan slaat deze pagina hem over en probeert hem later opnieuw.</p>
+  </footer>
+</div>
+
+<script>
+const CAMS = [
+  { id: 'nFozEhYTEMo', name: 'Erasmusbrug en Kop van Zuid', note: 'De brug, de torens en de cruiseterminal, met soms een cruiseschip aan de kade.', src: 'Rotterdam Make It Happen' },
+  { id: 'gsViKzj7nuQ', name: 'Erasmusbrug bij de KPN-toren', note: 'De brug met de lichtwand van de KPN-toren op de achtergrond.', src: 'Rotterdam Make It Happen' },
+  { id: 'AW9qfqH-uOQ', name: 'Skyline', note: 'Hoogbouw op de Kop van Zuid, de Rijnhaven en de Fenix.', src: 'RTM XL' },
+  { id: 'wHhs_Ef8LSU', name: 'Hofplein', note: 'De grote rotonde midden in het centrum, altijd in beweging.', src: 'Rotterdam Make It Happen' },
+  { id: '2JyBX4a0-aA', name: 'Laurenskwartier en Binnenrotte', note: 'Het hart van het centrum, waar ook de markt staat.', src: 'Rotterdam Make It Happen' },
+  { id: 'i8wVIrn9SlU', name: 'Rijnhaven', note: 'Een oude havenkom die verandert in een nieuw stuk stad.', src: 'Gemeente Rotterdam' },
+  { id: 'M09NaBVPjAI', name: 'Amazonehaven west', note: 'Zeeschepen en containerkades, ver buiten het centrum.', src: 'Port of Rotterdam' },
+  { id: '_KVWehizoNU', name: 'Nieuwe Waterweg', note: 'De vaarroute van de Noordzee naar de stad, gezien vanuit de haven.', src: 'Port of Rotterdam' },
+  { id: '_pGIJmXxAHk', name: 'Nieuwe Waterweg bij de kust', note: 'Dezelfde vaarroute, op een andere plek en met meer lucht.', src: 'Strandweer.nu' },
+  { id: 'jDF264Bg1_c', name: 'Boulevard Hoek van Holland', note: 'Ook dit is Rotterdam: de wijk met een eigen Noordzeestrand.', src: 'Strandweer.nu' },
+];
+CAMS.forEach((c, i) => { c.code = 'CAM ' + String(i + 1).padStart(2, '0'); c.offlineUntil = 0; });
+
+const SWAP_MIN = 18000, SWAP_MAX = 40000;   // wisseltijd in ms
+const LOAD_TIMEOUT = 25000;                 // daarna telt een stream als offline
+const OFFLINE_RETRY = 10 * 60 * 1000;       // offline streams later opnieuw proberen
+
+const $ = (id) => document.getElementById(id);
+const wall = $('wall');
+const narrow = window.matchMedia('(max-width: 760px)');
+const tiles = [];
+let paused = false, dueAt = 0, delay = 0, lastTile = -1;
+
+const usable = () => CAMS.filter((c) => c.offlineUntil < Date.now());
+const shown = () => tiles.flatMap((t) => [t.cam, t.pending]).filter(Boolean);
+const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+function buildTile(i) {
+  const el = document.createElement('div');
+  el.className = 'tile';
+  el.innerHTML = '<div class="waiting">Verbinden met Rotterdam</div>' +
+    '<div class="live" hidden>LIVE</div>' +
+    '<div class="tag" hidden><div><span class="code"></span><span class="name"></span></div>' +
+    '<a target="_blank" rel="noopener noreferrer">YouTube ↗</a></div>';
+  const t = { i, el, cam: null, pending: null, layer: null, player: null, token: 0 };
+  el.addEventListener('click', (e) => {
+    if (i === 0 || e.target.closest('a') || !t.cam) return;
+    swapWithMain(t);
+  });
+  wall.appendChild(el);
+  tiles.push(t);
+}
+
+function label(t, cam) {
+  t.el.querySelector('.waiting').hidden = true;
+  t.el.querySelector('.live').hidden = false;
+  t.el.querySelector('.tag').hidden = false;
+  t.el.querySelector('.code').textContent = cam.code;
+  t.el.querySelector('.name').textContent = cam.name;
+  const a = t.el.querySelector('a');
+  a.href = 'https://www.youtube.com/watch?v=' + cam.id;
+  a.setAttribute('aria-label', cam.name + ' op YouTube bekijken');
+  t.el.title = t.i === 0 ? '' : 'Zet ' + cam.name + ' op het grote scherm';
+}
+
+// De nieuwe stream laadt onzichtbaar onder de oude en komt pas in beeld als hij echt speelt.
+function load(t, cam) {
+  const token = ++t.token;
+  if (t.pendingLayer) discard(t.pendingPlayer, t.pendingLayer);
+  t.pending = cam;
+  renderList();
+
+  const layer = document.createElement('div');
+  layer.className = 'layer';
+  const slot = document.createElement('div');
+  layer.appendChild(slot);
+  t.el.insertBefore(layer, t.el.querySelector('.live'));
+
+  const fail = () => {
+    if (token !== t.token) return;
+    clearTimeout(timer);
+    cam.offlineUntil = Date.now() + OFFLINE_RETRY;
+    discard(player, layer);
+    t.pending = t.pendingLayer = t.pendingPlayer = null;
+    const alt = usable().filter((c) => !shown().includes(c));
+    if (alt.length) load(t, pick(alt)); else renderList();
+  };
+  const timer = setTimeout(() => {
+    if (document.hidden) return;   // verborgen tabbladen spelen vaak niet af
+    fail();
+  }, LOAD_TIMEOUT);
+
+  const player = new YT.Player(slot, {
+    host: 'https://www.youtube-nocookie.com',
+    videoId: cam.id,
+    playerVars: { autoplay: 1, mute: 1, controls: 0, playsinline: 1, rel: 0, iv_load_policy: 3, disablekb: 1, fs: 0, origin: location.origin },
+    events: {
+      onReady: (e) => { e.target.mute(); e.target.playVideo(); },
+      onError: fail,
+      onStateChange: (e) => {
+        if (token !== t.token) {
+          return;
+        }
+        if (e.data === YT.PlayerState.PLAYING && t.pending === cam) {
+          clearTimeout(timer);
+          commit(t, cam, layer, player);
+        } else if (e.data === YT.PlayerState.ENDED && t.cam === cam) {
+          cam.offlineUntil = Date.now() + OFFLINE_RETRY;
+          replace(t);
+        }
+      },
+    },
+  });
+  t.pendingLayer = layer;
+  t.pendingPlayer = player;
+}
+
+function commit(t, cam, layer, player) {
+  const oldLayer = t.layer, oldPlayer = t.player;
+  t.cam = cam; t.layer = layer; t.player = player;
+  t.pending = t.pendingLayer = t.pendingPlayer = null;
+  layer.classList.add('on');
+  label(t, cam);
+  renderList();
+  if (oldLayer) setTimeout(() => discard(oldPlayer, oldLayer), 1300);
+}
+
+function discard(player, layer) {
+  try { player && player.destroy(); } catch (e) { /* speler was al weg */ }
+  layer && layer.remove();
+}
+
+function replace(t) {
+  const alt = usable().filter((c) => !shown().includes(c));
+  if (alt.length) load(t, pick(alt));
+}
+
+function swapWithMain(t) {
+  const main = tiles[0];
+  const a = main.cam, b = t.cam;
+  if (!a || !b) return;
+  load(main, b);
+  load(t, a);
+  schedule();
+}
+
+function shuffleOnce() {
+  const alt = usable().filter((c) => !shown().includes(c));
+  if (!alt.length) { schedule(); return; }
+  const free = tiles.filter((t) => t.i !== lastTile && !t.pending);
+  const t = pick(free.length ? free : tiles);
+  lastTile = t.i;
+  load(t, pick(alt));
+  schedule();
+}
+
+function schedule() {
+  delay = SWAP_MIN + Math.random() * (SWAP_MAX - SWAP_MIN);
+  dueAt = Date.now() + delay;
+}
+
+function tick() {
+  const now = Date.now();
+  if (paused) {
+    dueAt += 250;
+  } else if (!document.hidden && now >= dueAt && dueAt) {
+    shuffleOnce();
+  }
+  const left = Math.max(0, dueAt - now);
+  $('meter').style.width = (delay ? (1 - left / delay) * 100 : 0) + '%';
+  $('status').textContent = paused ? 'Wisselen staat op pauze' : 'Volgende wissel over ' + Math.ceil(left / 1000) + ' s';
+}
+
+function renderList() {
+  const list = $('camlist');
+  if (!list.children.length) {
+    CAMS.forEach((c) => {
+      const li = document.createElement('li');
+      li.innerHTML = '<button type="button"><span class="ccode"></span><span class="cname"></span><span class="cstate"></span><span class="cnote"></span></button>';
+      li.querySelector('.ccode').textContent = c.code;
+      li.querySelector('.cname').textContent = c.name;
+      li.querySelector('.cnote').textContent = c.note + ' Bron: ' + c.src + '.';
+      li.querySelector('button').addEventListener('click', () => choose(c));
+      c.row = li;
+      list.appendChild(li);
+    });
+  }
+  CAMS.forEach((c) => {
+    const s = c.row.querySelector('.cstate');
+    const on = tiles.some((t) => t.cam === c);
+    const off = c.offlineUntil > Date.now();
+    s.className = 'cstate' + (on ? ' in' : off ? ' off' : '');
+    s.textContent = on ? 'IN BEELD' : off ? 'OFFLINE' : 'STAND-BY';
+  });
+}
+
+function choose(cam) {
+  const holder = tiles.find((t) => t.cam === cam);
+  if (holder && holder.i === 0) return;
+  cam.offlineUntil = 0;
+  if (holder) swapWithMain(holder); else { load(tiles[0], cam); schedule(); }
+  wall.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+}
+
+function drawBridge() {
+  const svg = $('bridge');
+  const NS = 'http://www.w3.org/2000/svg';
+  const add = (tag, attrs) => {
+    const n = document.createElementNS(NS, tag);
+    Object.entries(attrs).forEach(([k, v]) => n.setAttribute(k, v));
+    svg.appendChild(n);
+  };
+  const deck = 158;
+  add('line', { x1: 0, y1: deck, x2: 1200, y2: deck, 'stroke-width': 3 });
+  add('polyline', { points: `355,206 395,${deck} 362,8`, 'stroke-width': 7, 'stroke-linejoin': 'round' });
+  for (let i = 0; i < 16; i++) {          // hoofdkabels naar de overspanning
+    const py = 18 + i * 6.6;
+    const px = 362 + (py - 8) * (33 / 150);
+    add('line', { x1: px, y1: py, x2: 985 - i * 36, y2: deck, 'stroke-width': .9 });
+  }
+  for (let i = 0; i < 5; i++) {           // tuikabels naar achteren
+    const py = 12 + i * 8;
+    const px = 362 + (py - 8) * (33 / 150);
+    add('line', { x1: px, y1: py, x2: 268 + i * 13, y2: deck, 'stroke-width': 1.4 });
+  }
+  [172, 184, 196].forEach((y, i) => add('line', { x1: 30 + i * 90, y1: y, x2: 1170 - i * 130, y2: y, 'stroke-width': .6, 'stroke-dasharray': `${46 - i * 8} ${28 + i * 14}`, opacity: .55 - i * .12 }));
+}
+
+function clock() {
+  const f = new Intl.DateTimeFormat('nl-NL', { timeZone: 'Europe/Amsterdam', weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  $('clock').textContent = f.format(new Date()) + ' in Rotterdam';
+}
+
+// Telefoon: drie schermen. Breder: vier. Past zich aan als het venster verandert.
+function fitTiles() {
+  const wanted = narrow.matches ? 3 : 4;
+  while (tiles.length > wanted) {
+    const t = tiles.pop();
+    t.token++;
+    discard(t.pendingPlayer, t.pendingLayer);
+    discard(t.player, t.layer);
+    t.el.remove();
+  }
+  while (tiles.length < wanted) {
+    buildTile(tiles.length);
+    replace(tiles[tiles.length - 1]);
+  }
+  renderList();
+}
+
+function start() {
+  buildTile(0);
+  renderList();
+  // Begin groots: een brug of skyline op het hoofdscherm, de rest willekeurig.
+  load(tiles[0], pick(CAMS.slice(0, 3)));
+  fitTiles();
+  narrow.addEventListener('change', fitTiles);
+  schedule();
+  setInterval(tick, 250);
+}
+
+$('next').addEventListener('click', shuffleOnce);
+$('pause').addEventListener('click', (e) => {
+  paused = !paused;
+  e.currentTarget.setAttribute('aria-pressed', String(paused));
+  e.currentTarget.textContent = paused ? 'Hervat wisselen' : 'Pauzeer wisselen';
+});
+drawBridge();
+clock();
+setInterval(clock, 1000);
+
+window.onYouTubeIframeAPIReady = start;
+const api = document.createElement('script');
+api.src = 'https://www.youtube.com/iframe_api';
+api.onerror = () => { $('status').textContent = 'YouTube is niet bereikbaar. Controleer je internetverbinding en herlaad de pagina.'; };
+document.head.appendChild(api);
+</script>
+</body>
+</html>
